@@ -1,10 +1,10 @@
 package cc.vayne.controller;
 
 import cc.vayne.dto.ResponseModel;
-import io.github.flashvayne.chatgpt.dto.chat.MultiChatMessage;
-import io.github.flashvayne.chatgpt.dto.image.ImageFormat;
-import io.github.flashvayne.chatgpt.dto.image.ImageSize;
-import io.github.flashvayne.chatgpt.service.ChatgptService;
+import io.github.ringle.chatgpt.dto.chat.MultiChatMessage;
+import io.github.ringle.chatgpt.dto.image.ImageFormat;
+import io.github.ringle.chatgpt.dto.image.ImageSize;
+import io.github.ringle.chatgpt.service.ChatgptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
@@ -12,7 +12,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @CrossOrigin
