@@ -1,17 +1,21 @@
 package cc.vayne.controller;
 
 import cc.vayne.dto.ResponseModel;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.ringle.chatgpt.dto.chat.MultiChatMessage;
 import io.github.ringle.chatgpt.dto.image.ImageFormat;
 import io.github.ringle.chatgpt.dto.image.ImageSize;
 import io.github.ringle.chatgpt.service.ChatgptService;
 import lombok.extern.slf4j.Slf4j;
+import lombok.var;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,6 +49,43 @@ public class Controller {
         String responseMessage = chatgptService.multiChat(messages);
         log.info("requestId {}, ip {}, get a reply : {}", requestId, request.getRemoteHost(), responseMessage);
         return ResponseModel.success(responseMessage);
+    }
+
+    @PostMapping("/multi/send2")
+    public Flux<String> multiSend2(HttpServletRequest request, @RequestBody List<MultiChatMessage> messages) throws Exception {
+        String requestId = UUID.randomUUID().toString();
+        Flux<String> responseMessage = chatgptService.consumeServerSentEvent(messages);
+        responseMessage.subscribe(
+                event->log.info("requestId {}, ip {}, get a reply : {}", requestId, request.getRemoteHost(), event),
+                    e->log.error("error:{}", e),
+                    () -> log.info("complete")
+
+        );
+        return responseMessage;
+    }
+
+    @GetMapping("/multi/send3")
+    public Flux<String> multiSend3(HttpServletRequest request) {
+        String requestId = UUID.randomUUID().toString();
+        log.info("requestId {}, ip {}, send messages", requestId, request.getRemoteHost());
+        var messages = new ArrayList<MultiChatMessage>();
+        var message = new MultiChatMessage();
+        message.setRole("user");
+        message.setContent("You are a helpful assistant.");
+        messages.add(message);
+        try {
+            Flux<String> result = chatgptService.consumeServerSentEvent(messages);
+            result.subscribe(event ->
+                            log.info("requestId {}, ip {}, get a reply : {}", requestId, request.getRemoteHost(), event),
+                    error -> log.error("Error receiving SSE: {}", error),
+                    () -> log.info("Completed!!!"));
+            return result;
+        } catch (JsonProcessingException e) {
+            log.error("requestId {}, ip {}, json processing exception : {}", requestId,
+                    request.getRemoteHost(), e.getMessage());
+            log.error("Error while processing JSON", e);
+            return Flux.empty();
+        }
     }
 
     @GetMapping("/image")
